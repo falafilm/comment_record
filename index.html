@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeExcel | Voice & Photo Excel Collector</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- ExcelJS and FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #131c31;
+            --bg-card: rgba(22, 30, 49, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            
+            --success: #10b981;
+            --success-hover: #059669;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            
+            --danger: #f43f5e;
+            --danger-hover: #e11d48;
+            --danger-glow: rgba(244, 63, 94, 0.15);
+
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            
+            --font-outfit: 'Outfit', 'Sarabun', sans-serif;
+            --font-inter: 'Inter', 'Sarabun', sans-serif;
+            
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-inter);
+            min-height: 100.1vh;
+            padding-bottom: 120px;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: var(--radius-sm);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 32px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 32px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--success) 100%);
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .logo-text h1 {
+            font-family: var(--font-outfit);
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--border-hover);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+        }
+
+        .stat-info h4 {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-info p {
+            font-family: var(--font-outfit);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+        }
+
+        .stat-icon.blue { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+        /* Main Control Bar */
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .action-buttons {
+                width: auto;
+            }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-family: var(--font-outfit);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-hover) 0%, #312e81 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, var(--success-hover) 0%, #065f46 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.1);
+            border-color: var(--danger);
+        }
+
+        /* Items Container (List / Cards) */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 32px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .row-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            position: relative;
+            transition: var(--transition);
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1024px) {
+            .row-card {
+                grid-template-columns: 80px 2.2fr 3fr 2.5fr;
+                align-items: center;
+                gap: 24px;
+            }
+        }
+
+        .row-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 15px 35px -15px rgba(0, 0, 0, 0.6);
+        }
+
+        .row-card.recording {
+            border-color: var(--danger);
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+            background: rgba(244, 63, 94, 0.03);
+        }
+
+        /* Row Number */
+        .row-number-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-family: var(--font-outfit);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Form Inputs */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-inter);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .voice-input-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .voice-textarea {
+            min-height: 85px;
+            resize: vertical;
+            padding-right: 50px;
+        }
+
+        .voice-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .mic-btn-wrapper {
+            position: relative;
+        }
+
+        .mic-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mic-btn:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .mic-btn.active {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+            animation: pulse-danger 1.5s infinite;
+        }
+
+        .speech-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .speech-status.listening {
+            color: var(--danger);
+            font-weight: 500;
+        }
+
+        /* Waveform Animation */
+        .waveform {
+            display: none;
+            align-items: center;
+            gap: 3px;
+            height: 18px;
+        }
+
+        .row-card.recording .waveform {
+            display: inline-flex;
+        }
+
+        .bar {
+            width: 3px;
+            height: 100%;
+            background-color: var(--danger);
+            border-radius: 3px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+
+        .bar:nth-child(2) { animation-delay: 0.15s; }
+        .bar:nth-child(3) { animation-delay: 0.3s; }
+        .bar:nth-child(4) { animation-delay: 0.45s; }
+        .bar:nth-child(5) { animation-delay: 0.6s; }
+
+        /* Photo Area */
+        .photo-uploader {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(15, 23, 42, 0.3);
+            position: relative;
+            overflow: hidden;
+            gap: 8px;
+        }
+
+        .photo-uploader:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .photo-uploader input[type="file"] {
+            display: none;
+        }
+
+        .uploader-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .uploader-content i {
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .photo-uploader:hover .uploader-content i {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .uploader-content p {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .uploader-content span {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .photo-preview-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: calc(var(--radius-md) - 2px);
+        }
+
+        .photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            opacity: 0;
+            transition: var(--transition);
+            border-radius: calc(var(--radius-md) - 2px);
+        }
+
+        .photo-preview-container:hover .photo-overlay {
+            opacity: 1;
+        }
+
+        .photo-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .photo-action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .photo-action-btn.retake:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .photo-action-btn.delete:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .photo-shortcut-buttons {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .btn-shortcut {
+            flex: 1;
+            padding: 8px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: var(--transition);
+        }
+
+        .btn-shortcut:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* Delete Row Button */
+        .delete-row-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 1024px) {
+            .delete-row-btn {
+                position: static;
+            }
+        }
+
+        .delete-row-btn:hover {
+            background: var(--danger-glow);
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        /* Camera Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(7, 10, 19, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 600px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.open .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-family: var(--font-outfit);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .camera-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .webcam-wrapper {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #000;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror view */
+        }
+
+        .camera-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .flash-active {
+            animation: cameraFlash 0.25s ease-out;
+        }
+
+        .camera-controls {
+            display: flex;
+            width: 100%;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .device-selector {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .shutter-btn {
+            background: white;
+            color: black;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        .shutter-btn:hover {
+            transform: scale(1.08);
+            border-color: var(--primary);
+        }
+
+        .shutter-btn i {
+            color: #0f172a;
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            background: var(--bg-card);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 60px 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .empty-state h3 {
+            font-family: var(--font-outfit);
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        /* Live Preview Table */
+        .preview-section {
+            margin-top: 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-header h2 {
+            font-family: var(--font-outfit);
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .preview-table th {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-primary);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-family: var(--font-outfit);
+        }
+
+        .preview-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+
+        .preview-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .preview-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .tbl-thumb {
+            width: 60px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            min-width: 280px;
+            max-width: 400px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.danger { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+
+        .toast-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.danger .toast-icon { color: var(--danger); }
+        .toast.warning .toast-icon { color: var(--warning); }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-family: var(--font-outfit);
+            margin-bottom: 2px;
+        }
+
+        .toast-desc {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        /* Keyframe Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1.1); }
+        }
+
+        @keyframes cameraFlash {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Photos Grid & Multi-photo Upload styles */
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            width: 100%;
+            margin-top: 8px;
+            min-height: 60px;
+        }
+        .photo-item {
+            position: relative;
+            aspect-ratio: 4/3;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        .photo-item:hover {
+            border-color: var(--border-hover);
+            transform: scale(1.02);
+        }
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+        }
+        .photo-item-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(244, 63, 94, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            transition: var(--transition);
+            z-index: 5;
+        }
+        .photo-item-delete:hover {
+            background: var(--danger);
+            transform: scale(1.1);
+        }
+        .add-photo-btn {
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            aspect-ratio: 4/3;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .add-photo-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Sticky Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            z-index: 999;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
+        }
+        .bottom-bar .btn {
+            flex: 1;
+            max-width: 250px;
+            height: 46px;
+            font-size: 15px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <i data-lucide="file-spreadsheet" style="width: 26px; height: 26px;"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>VibeExcel</h1>
+                    <p>ระบบเก็บข้อมูลด้วยภาพและเสียงพูดเพื่อออกไฟล์ Excel</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Container -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>รายการทั้งหมด</h4>
+                    <p id="stat-total">0</p>
+                </div>
+                <div class="stat-icon blue">
+                    <i data-lucide="list"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>บันทึกเสียงแล้ว</h4>
+                    <p id="stat-voice">0/0</p>
+                </div>
+                <div class="stat-icon orange">
+                    <i data-lucide="mic"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h4>ถ่ายรูป/อัปโหลดแล้ว</h4>
+                    <p id="stat-photo">0/0</p>
+                </div>
+                <div class="stat-icon green">
+                    <i data-lucide="camera"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls (Mobile/Supplementary actions) -->
+        <div class="control-bar">
+            <div>
+                <h3 style="font-family: var(--font-outfit); font-weight: 600;">รายการเก็บข้อมูล</h3>
+                <p style="color: var(--text-secondary); font-size: 13px;">กรอกข้อมูล พูด หรือถ่ายรูป เพื่อนำข้อมูลใส่ในแต่ละคอลัมน์ของ Excel</p>
+            </div>
+            <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none;">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                ล้างข้อมูลทั้งหมด
+            </button>
+        </div>
+
+        <!-- Dynamic Rows List -->
+        <div id="items-list" class="items-list">
+            <!-- Empty state default -->
+            <div class="empty-state" id="empty-state">
+                <div class="empty-state-icon">
+                    <i data-lucide="folder-open" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h3>ยังไม่มีข้อมูลบันทึก</h3>
+                <p>กดปุ่ม <strong>"เพิ่มแถวใหม่"</strong> เพื่อเริ่มต้นเก็บข้อมูลสำหรับการออกรายงาน Excel</p>
+                <button class="btn btn-primary" onclick="addRow()">
+                    <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+                    เพิ่มแถวแรก
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Preview Table Section -->
+        <div class="preview-section" id="preview-section" style="display: none;">
+            <div class="preview-header">
+                <h2>
+                    <i data-lucide="eye" style="color: var(--primary);"></i>
+                    ตัวอย่างตารางก่อนส่งออก
+                </h2>
+                <span style="font-size: 12px; color: var(--text-muted);" id="preview-count">0 แถว</span>
+            </div>
+            <div class="preview-table-wrapper">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">No.</th>
+                            <th>LINE</th>
+                            <th>Model</th>
+                            <th>ST.</th>
+                            <th>Issue</th>
+                            <th>Action to do</th>
+                            <th>ผู้รับผิดชอบ</th>
+                            <th style="width: 120px; text-align: center;">Picture</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-table-body">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-lucide="camera" style="display:inline-block; vertical-align:middle; margin-right:8px; color:var(--primary);"></i> ถ่ายรูปภาพประกอบ</h3>
+                <button class="close-btn" onclick="closeCameraModal()">&times;</button>
+            </div>
+            <div class="camera-body">
+                <div class="webcam-wrapper">
+                    <video id="webcam" autoplay playsinline></video>
+                    <div id="cameraFlash" class="camera-flash"></div>
+                </div>
+                <div class="camera-controls">
+                    <select id="cameraSelect" class="device-selector" onchange="switchCamera(this.value)">
+                        <!-- Available cameras will be listed here -->
+                    </select>
+                    <button class="shutter-btn" onclick="takeSnapshot()" title="กดถ่ายภาพ">
+                        <i data-lucide="aperture"></i>
+                    </button>
+                    <div style="width: 38px;"></div> <!-- Spacer for symmetry -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div id="downloadModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 28px; gap: 16px; display: flex; flex-direction: column; align-items: center;">
+            <div style="background: rgba(16, 185, 129, 0.15); color: var(--success); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="file-check" style="width: 32px; height: 32px;"></i>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <h3 style="font-family: var(--font-outfit); font-size: 20px; font-weight: 700; color: var(--text-primary);">สร้างไฟล์ Excel สำเร็จ!</h3>
+                <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5; max-width: 300px; margin: 0 auto;">
+                    ระบบได้แปลงรายงานรูปภาพและคำบรรยายเสร็จสมบูรณ์แล้ว โปรดกดปุ่มด้านล่างเพื่อเริ่มดาวน์โหลด
+                </p>
+            </div>
+            
+            <a id="download-link" class="btn btn-success" style="display: inline-flex; width: 100%; text-decoration: none; font-size: 15px; height: 48px; margin-top: 10px;" download>
+                <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+                ดาวน์โหลดไฟล์
+            </a>
+            
+            <button class="btn" onclick="closeDownloadModal()" style="width: 100%; height: 44px; font-size: 14px; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer;">
+                ปิดหน้าต่างนี้
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+    <datalist id="existing-lines"></datalist>
+    <datalist id="existing-models"></datalist>
+    <datalist id="existing-sts"></datalist>
+    <datalist id="existing-issues"></datalist>
+    <datalist id="existing-pics"></datalist>
+
+    <script>
+        // Data Store
+        let rows = [];
+        let activeCameraRowId = null;
+        let activeSpeechRowId = null;
+        let localStream = null;
+        let recognition = null;
+        let availableCameras = [];
+        let isMirrored = true;
+        let currentDownloadUrl = null;
+
+        function openDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            modal.classList.add('open');
+            lucide.createIcons();
+        }
+
+        function closeDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            modal.classList.remove('open');
+        }
+
+        // DOM elements
+        const itemsList = document.getElementById('items-list');
+        const emptyState = document.getElementById('empty-state');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        const previewSection = document.getElementById('preview-section');
+        const previewTableBody = document.getElementById('preview-table-body');
+        const previewCount = document.getElementById('preview-count');
+        const statTotal = document.getElementById('stat-total');
+        const statVoice = document.getElementById('stat-voice');
+        const statPhoto = document.getElementById('stat-photo');
+
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initSpeechRecognition();
+            loadSavedData();
+            updateDatalists();
+        });
+
+        // Toast Notification System
+        function showToast(title, desc, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconName = 'info';
+            if (type === 'success') iconName = 'check-circle';
+            if (type === 'danger') iconName = 'alert-triangle';
+            if (type === 'warning') iconName = 'alert-circle';
+            
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i data-lucide="${iconName}"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-desc">${desc}</div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 50);
+            
+            // Remove after 3.5s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Web Audio API Shutter Sound
+        function playShutterSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(100, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.05);
+                osc.frequency.exponentialRampToValueAtTime(250, ctx.currentTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.16);
+            } catch (e) {
+                console.error("AudioContext is blocked or not supported on this browser:", e);
+            }
+        }
+
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn('Speech Recognition API not supported in this browser.');
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'th-TH'; // Default to Thai language
+
+            recognition.onstart = () => {
+                if (activeSpeechRowId !== null) {
+                    updateSpeechUI(activeSpeechRowId, true, 'กำลังฟัง... พูดได้เลย');
+                    const card = document.getElementById(`row-card-${activeSpeechRowId}`);
+                    if (card) card.classList.add('recording');
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (activeSpeechRowId !== null) {
+                    let errMsg = 'เกิดข้อผิดพลาดในการฟัง';
+                    if (event.error === 'no-speech') errMsg = 'ตรวจไม่พบเสียงพูด กรุณาลองใหม่';
+                    if (event.error === 'not-allowed') errMsg = 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน';
+                    
+                    showToast('การบันทึกเสียงล้มเหลว', errMsg, 'danger');
+                    stopSpeechRecognition();
+                }
+            };
+
+            recognition.onend = () => {
+                if (activeSpeechRowId !== null) {
+                    stopSpeechRecognition();
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                if (activeSpeechRowId !== null && transcript) {
+                    const row = rows.find(r => r.id === activeSpeechRowId);
+                    if (row) {
+                        // Append transcript to existing text or replace it
+                        const textarea = document.getElementById(`voice-note-${activeSpeechRowId}`);
+                        const prevVal = textarea.value.trim();
+                        const newVal = prevVal ? prevVal + ' ' + transcript : transcript;
+                        
+                        textarea.value = newVal;
+                        row.voiceNote = newVal;
+                        
+                        saveToLocalStorage();
+                        updateStats();
+                        updatePreviewTable();
+                        showToast('บันทึกเสียงสำเร็จ', `ได้ประโยค: "${transcript}"`, 'success');
+                    }
+                }
+            };
+        }
+
+        function toggleSpeech(rowId) {
+            if (!recognition) {
+                showToast('เบราว์เซอร์ไม่รองรับ', 'เบราว์เซอร์นี้ไม่รองรับการพิมพ์ด้วยเสียง (แนะนำ Google Chrome หรือ Microsoft Edge)', 'warning');
+                return;
+            }
+
+            if (activeSpeechRowId === rowId) {
+                // If clicking the active mic, stop it
+                recognition.stop();
+                stopSpeechRecognition();
+            } else {
+                // If another mic was recording, stop it first
+                if (activeSpeechRowId !== null) {
+                    recognition.stop();
+                    stopSpeechRecognition();
+                }
+                
+                // Start listening for this row
+                activeSpeechRowId = rowId;
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(e);
+                    // Re-try starting
+                    stopSpeechRecognition();
+                }
+            }
+        }
+
+        function stopSpeechRecognition() {
+            if (activeSpeechRowId !== null) {
+                const prevId = activeSpeechRowId;
+                activeSpeechRowId = null;
+                updateSpeechUI(prevId, false, 'คลิกปุ่มไมค์เพื่อพูด');
+                const card = document.getElementById(`row-card-${prevId}`);
+                if (card) card.classList.remove('recording');
+            }
+        }
+
+        function updateSpeechUI(rowId, isActive, statusText) {
+            const micBtn = document.getElementById(`mic-btn-${rowId}`);
+            const statusLabel = document.getElementById(`speech-status-${rowId}`);
+            if (micBtn) {
+                if (isActive) {
+                    micBtn.classList.add('active');
+                    micBtn.innerHTML = '<i data-lucide="mic-off" style="width:20px; height:20px;"></i>';
+                } else {
+                    micBtn.classList.remove('active');
+                    micBtn.innerHTML = '<i data-lucide="mic" style="width:20px; height:20px;"></i>';
+                }
+                lucide.createIcons();
+            }
+            if (statusLabel) {
+                statusLabel.innerText = statusText;
+                if (isActive) {
+                    statusLabel.classList.add('listening');
+                } else {
+                    statusLabel.classList.remove('listening');
+                }
+            }
+        }
+
+        // Preset commonly used entries for auto-suggestion
+        const DEFAULT_LINES = ['Line A', 'Line B', 'Line C', 'Line 1', 'Line 2'];
+        const DEFAULT_MODELS = ['Model X', 'Model Y', 'Model Z'];
+        const DEFAULT_STS = ['ST-10', 'ST-20', 'ST-30', 'ST-40'];
+        const DEFAULT_ISSUES = ['Scratch', 'Dent', 'Broken', 'Missing', 'Cracked'];
+        const DEFAULT_PICS = ['นาย A', 'นาย B', 'นาย C', 'ทีม A', 'ทีม B'];
+
+        function updateDatalists() {
+            updateSingleDatalist('existing-lines', 'line', DEFAULT_LINES);
+            updateSingleDatalist('existing-models', 'model', DEFAULT_MODELS);
+            updateSingleDatalist('existing-sts', 'st', DEFAULT_STS);
+            updateSingleDatalist('existing-issues', 'issue', DEFAULT_ISSUES);
+            updateSingleDatalist('existing-pics', 'pic', DEFAULT_PICS);
+        }
+
+        function updateSingleDatalist(elementId, fieldName, defaults) {
+            const datalist = document.getElementById(elementId);
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            const currentVals = rows.map(r => r[fieldName] ? r[fieldName].trim() : '').filter(v => v.length > 0);
+            const allVals = [...new Set([...currentVals, ...defaults])];
+            allVals.forEach(val => {
+                const option = document.createElement('option');
+                option.value = val;
+                datalist.appendChild(option);
+            });
+        }
+
+        // Manage Rows
+        function addRow(savedData = null) {
+            // Remove empty state if present
+            if (rows.length === 0) {
+                emptyState.style.display = 'none';
+                clearAllBtn.style.display = 'inline-flex';
+                previewSection.style.display = 'block';
+            }
+
+            const rowId = savedData ? savedData.id : Date.now();
+            const newRow = savedData ? savedData : {
+                id: rowId,
+                line: '',
+                model: '',
+                st: '',
+                issue: '',
+                voiceNote: '',
+                pic: '',
+                photos: [],
+                dateAdded: new Date().toLocaleString('th-TH')
+            };
+
+            // Backward compatibility for old title string structure
+            if (newRow.title && !newRow.line) {
+                newRow.line = newRow.title;
+            }
+            if (newRow.photo && (!newRow.photos || newRow.photos.length === 0)) {
+                newRow.photos = [newRow.photo];
+            }
+            if (!newRow.photos) {
+                newRow.photos = [];
+            }
+
+            // Ensure the row is added to the data store
+            if (!rows.some(r => r.id === newRow.id)) {
+                rows.push(newRow);
+            }
+
+            if (!savedData) {
+                saveToLocalStorage();
+            }
+
+            const card = document.createElement('div');
+            card.className = 'row-card';
+            card.id = `row-card-${rowId}`;
+            
+            card.innerHTML = `
+                <!-- Delete Button -->
+                <button class="delete-row-btn" onclick="deleteRow(${rowId})" title="ลบแถวนี้">
+                    <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                </button>
+                
+                <!-- Number -->
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div class="row-number-badge">${rows.indexOf(newRow) + 1}</div>
+                </div>
+
+                <!-- Fields grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+                    <!-- LINE -->
+                    <div class="form-group">
+                        <label for="line-input-${rowId}">
+                            <i data-lucide="layout" style="width:14px; height:14px; color:var(--primary)"></i>
+                            LINE (คอลัมน์ B)
+                        </label>
+                        <input type="text" id="line-input-${rowId}" class="form-input" 
+                               placeholder="เช่น FCA-1" value="${newRow.line || ''}" 
+                               list="existing-lines"
+                               oninput="updateRowField(${rowId}, 'line', this.value)">
+                    </div>
+
+                    <!-- Model -->
+                    <div class="form-group">
+                        <label for="model-input-${rowId}">
+                            <i data-lucide="package" style="width:14px; height:14px; color:var(--primary)"></i>
+                            Model (คอลัมน์ C)
+                        </label>
+                        <input type="text" id="model-input-${rowId}" class="form-input" 
+                               placeholder="เช่น B216" value="${newRow.model || ''}" 
+                               list="existing-models"
+                               oninput="updateRowField(${rowId}, 'model', this.value)">
+                    </div>
+
+                    <!-- ST. -->
+                    <div class="form-group">
+                        <label for="st-input-${rowId}">
+                            <i data-lucide="activity" style="width:14px; height:14px; color:var(--primary)"></i>
+                            ST. (คอลัมน์ D)
+                        </label>
+                        <input type="text" id="st-input-${rowId}" class="form-input" 
+                               placeholder="เช่น 20" value="${newRow.st || ''}" 
+                               list="existing-sts"
+                               oninput="updateRowField(${rowId}, 'st', this.value)">
+                    </div>
+
+                    <!-- Issue -->
+                    <div class="form-group">
+                        <label for="issue-input-${rowId}">
+                            <i data-lucide="alert-circle" style="width:14px; height:14px; color:var(--danger)"></i>
+                            Issue (คอลัมน์ E)
+                        </label>
+                        <input type="text" id="issue-input-${rowId}" class="form-input" 
+                               placeholder="เช่น Scratch" value="${newRow.issue || ''}" 
+                               list="existing-issues"
+                               oninput="updateRowField(${rowId}, 'issue', this.value)">
+                    </div>
+
+                    <!-- ผู้รับผิดชอบ (PIC) -->
+                    <div class="form-group">
+                        <label for="pic-input-${rowId}">
+                            <i data-lucide="user" style="width:14px; height:14px; color:var(--primary)"></i>
+                            ผู้รับผิดชอบ (คอลัมน์ G)
+                        </label>
+                        <input type="text" id="pic-input-${rowId}" class="form-input" 
+                               placeholder="ระบุผู้รับผิดชอบ" value="${newRow.pic || ''}" 
+                               list="existing-pics"
+                               oninput="updateRowField(${rowId}, 'pic', this.value)">
+                    </div>
+                </div>
+
+                <!-- Column 2: Action to do (Voice Transcript) -->
+                <div class="form-group voice-input-container">
+                    <label for="voice-note-${rowId}">
+                        <i data-lucide="mic" style="width:14px; height:14px; color:var(--warning)"></i>
+                        Action to do (คอลัมน์ F)
+                    </label>
+                    <textarea id="voice-note-${rowId}" class="form-input voice-textarea" 
+                              placeholder="กดรูปไมโครโฟนเพื่อพูดบันทึกการแก้ไข..."
+                              oninput="updateRowField(${rowId}, 'voiceNote', this.value)">${newRow.voiceNote}</textarea>
+                    
+                    <div class="voice-actions">
+                        <div class="mic-btn-wrapper">
+                            <button id="mic-btn-${rowId}" class="mic-btn" onclick="toggleSpeech(${rowId})" title="คลิกเพื่อพูด">
+                                <i data-lucide="mic" style="width:20px; height:20px;"></i>
+                            </button>
+                        </div>
+                        <span id="speech-status-${rowId}" class="speech-status">คลิกปุ่มไมค์เพื่อเริ่มบันทึกเสียง</span>
+                        
+                        <!-- Waveform animations visualizer -->
+                        <div class="waveform">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Photo -->
+                <div class="form-group">
+                    <label>
+                        <i data-lucide="image" style="width:14px; height:14px; color:var(--success)"></i>
+                        รูปภาพถ่าย (คอลัมน์ G, H...)
+                    </label>
+                    
+                    <input type="file" id="file-input-${rowId}" accept="image/*" style="display:none;" onchange="handleFileUpload(event, ${rowId})">
+                    
+                    <div class="photos-grid" id="photos-grid-${rowId}">
+                        <!-- Photos will be rendered here dynamically -->
+                    </div>
+
+                    <!-- Shortcut triggers -->
+                    <div class="photo-shortcut-buttons">
+                        <button class="btn-shortcut" onclick="openCameraModal(${rowId})">
+                            <i data-lucide="camera" style="width: 12px; height: 12px;"></i>
+                            ใช้กล้องถ่าย
+                        </button>
+                        <button class="btn-shortcut" onclick="triggerFileInput(${rowId})">
+                            <i data-lucide="upload-cloud" style="width: 12px; height: 12px;"></i>
+                            เลือกรูปภาพ
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            itemsList.appendChild(card);
+            renderPhotosGrid(rowId);
+            lucide.createIcons();
+            
+            updateStats();
+            updatePreviewTable();
+            updateDatalists();
+            
+            if (!savedData) {
+                showToast('เพิ่มแถวสำเร็จ', `สร้างรายการที่ ${rows.length} แล้ว`, 'success');
+                // Scroll card into view
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function updateRowField(id, field, value) {
+            const row = rows.find(r => r.id === id);
+            if (row) {
+                row[field] = value;
+                saveToLocalStorage();
+                updateStats();
+                updatePreviewTable();
+                if (['line', 'model', 'st', 'issue', 'pic'].includes(field)) {
+                    updateDatalists();
+                }
+            }
+        }
+
+        function deleteRow(id) {
+            const index = rows.findIndex(r => r.id === id);
+            if (index > -1) {
+                const card = document.getElementById(`row-card-${id}`);
+                
+                // Add fade out animation class
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(15px)';
+                
+                setTimeout(() => {
+                    card.remove();
+                    rows.splice(index, 1);
+                    saveToLocalStorage();
+                    
+                    // Update badges numbers
+                    const badges = document.querySelectorAll('.row-number-badge');
+                    badges.forEach((badge, idx) => {
+                        badge.innerText = idx + 1;
+                    });
+                    
+                    if (rows.length === 0) {
+                        emptyState.style.display = 'flex';
+                        clearAllBtn.style.display = 'none';
+                        previewSection.style.display = 'none';
+                    }
+                    
+                    updateStats();
+                    updatePreviewTable();
+                    updateDatalists();
+                    showToast('ลบแถวเรียบร้อย', 'ข้อมูลแถวถูกลบแล้ว', 'warning');
+                }, 300);
+            }
+        }
+
+        function clearAllRows() {
+            if (confirm('คุณต้องการลบข้อมูลทั้งหมดจริงหรือไม่?')) {
+                // Clear state
+                rows = [];
+                saveToLocalStorage();
+                
+                // Remove all card elements except the empty state
+                const cards = document.querySelectorAll('.row-card');
+                cards.forEach(card => card.remove());
+                
+                emptyState.style.display = 'flex';
+                clearAllBtn.style.display = 'none';
+                previewSection.style.display = 'none';
+                
+                updateStats();
+                updatePreviewTable();
+                updateDatalists();
+                showToast('ล้างข้อมูลทั้งหมดแล้ว', 'สร้างแถวใหม่เพื่อเริ่มต้นบันทึกข้อมูลอีกครั้ง', 'danger');
+            }
+        }
+
+        // Camera Logic
+        async function openCameraModal(rowId) {
+            activeCameraRowId = rowId;
+            const modal = document.getElementById('cameraModal');
+            modal.classList.add('open');
+            
+            // Get available webcams
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                availableCameras = devices.filter(device => device.kind === 'videoinput');
+                
+                const select = document.getElementById('cameraSelect');
+                select.innerHTML = '';
+                
+                availableCameras.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `กล้องตัวที่ ${index + 1}`;
+                    select.appendChild(option);
+                });
+                
+                // Start webcam stream with the environment (rear) camera by default
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Rear camera constraint
+                        width: { ideal: 1024 },
+                        height: { ideal: 768 }
+                    }
+                };
+                
+                // Try to find a camera with a label indicating it is the rear camera
+                const rearCamera = availableCameras.find(device => {
+                    const label = (device.label || '').toLowerCase();
+                    return label.includes('back') || 
+                           label.includes('rear') || 
+                           label.includes('หลัง') || 
+                           label.includes('environment') || 
+                           label.includes('main');
+                });
+                
+                if (rearCamera) {
+                    constraints.video.deviceId = { exact: rearCamera.deviceId };
+                }
+                
+                await startCameraStream(constraints);
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                showToast('ไม่สามารถเปิดกล้องได้', 'กรุณาอนุญาตการเข้าถึงกล้องถ่ายรูป หรือเลือกอัปโหลดไฟล์แทน', 'danger');
+                closeCameraModal();
+                triggerFileInput(rowId); // fallback
+            }
+        }
+
+        async function startCameraStream(constraints) {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('webcam');
+                video.srcObject = localStream;
+
+                // Determine if we should mirror the camera
+                const track = localStream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                const facingMode = settings.facingMode;
+                const deviceId = constraints.video.deviceId ? (constraints.video.deviceId.exact || constraints.video.deviceId) : null;
+                
+                isMirrored = true; // Default to mirror (e.g. desktop webcam / front camera)
+                
+                if (facingMode) {
+                    isMirrored = (facingMode === 'user');
+                } else if (deviceId && availableCameras.length > 0) {
+                    const activeDevice = availableCameras.find(d => d.deviceId === deviceId);
+                    if (activeDevice && activeDevice.label) {
+                        const label = activeDevice.label.toLowerCase();
+                        if (label.includes('back') || label.includes('rear') || label.includes('environment') || label.includes('หลัง')) {
+                            isMirrored = false;
+                        } else if (label.includes('front') || label.includes('selfie') || label.includes('หน้า')) {
+                            isMirrored = true;
+                        }
+                    }
+                } else {
+                    // Fallback check based on device type
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    isMirrored = !isMobile; // Mobile default rear camera is not mirrored
+                }
+                
+                if (isMirrored) {
+                    video.style.transform = 'scaleX(-1)';
+                } else {
+                    video.style.transform = 'scaleX(1)';
+                }
+            } catch (err) {
+                console.error("Error starting camera stream: ", err);
+                showToast('เข้าถึงกล้องล้มเหลว', 'โปรดตรวจสอบสิทธิ์การใช้กล้องของเบราว์เซอร์', 'danger');
+            }
+        }
+
+        async function switchCamera(deviceId) {
+            const constraints = {
+                video: {
+                    deviceId: { exact: deviceId },
+                    width: { ideal: 1024 },
+                    height: { ideal: 768 }
+                }
+            };
+            await startCameraStream(constraints);
+        }
+
+        function closeCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            modal.classList.remove('open');
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            activeCameraRowId = null;
+        }
+
+        function takeSnapshot() {
+            if (!localStream || activeCameraRowId === null) return;
+            
+            const video = document.getElementById('webcam');
+            const flash = document.getElementById('cameraFlash');
+            
+            // Trigger Flash visual effect
+            flash.classList.add('flash-active');
+            playShutterSound();
+            
+            setTimeout(() => {
+                flash.classList.remove('flash-active');
+            }, 250);
+
+            // Capture image in canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            
+            if (isMirrored) {
+                // Apply mirror image transformation since preview is mirrored
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            if (isMirrored) {
+                // Restore context settings
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            
+            // Convert to base64 jpeg
+            const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+            
+            savePhotoData(activeCameraRowId, base64Data);
+            closeCameraModal();
+            showToast('ถ่ายรูปสำเร็จ', 'บันทึกรูปภาพใส่ในแถวเก็บข้อมูลแล้ว', 'success');
+        }
+
+        function triggerFileInput(rowId) {
+            const fileInput = document.getElementById(`file-input-${rowId}`);
+            if (fileInput) fileInput.click();
+        }
+
+        function handleUploaderClick(event, rowId) {
+            // Prevent trigger if clicking on preview controls
+            if (event.target.closest('.photo-action-btn') || event.target.closest('.photo-shortcut-buttons')) {
+                return;
+            }
+            
+            const row = rows.find(r => r.id === rowId);
+            if (row && row.photo) {
+                // already has photo, doing nothing
+                return;
+            }
+            
+            // Prompt options: Camera Modal or File selection
+            openCameraModal(rowId);
+        }
+
+        function handleFileUpload(event, rowId) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showToast('ประเภทไฟล์ไม่ถูกต้อง', 'กรุณาเลือกเฉพาะไฟล์รูปภาพเท่านั้น', 'danger');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Resize to avoid huge base64 strings
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Max dimension limit
+                    const maxDim = 800;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    savePhotoData(rowId, compressedBase64);
+                    showToast('อัปโหลดสำเร็จ', 'บันทึกรูปภาพเรียบร้อยแล้ว', 'success');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; // Reset input to allow re-uploading the same file
+        }
+
+        function savePhotoData(rowId, base64Data) {
+            const row = rows.find(r => r.id === rowId);
+            if (row) {
+                if (!row.photos) row.photos = [];
+                row.photos.push(base64Data);
+                
+                renderPhotosGrid(rowId);
+                
+                saveToLocalStorage();
+                updateStats();
+                updatePreviewTable();
+            }
+        }
+
+        function renderPhotosGrid(rowId) {
+            const row = rows.find(r => r.id === rowId);
+            if (!row) return;
+            
+            const grid = document.getElementById(`photos-grid-${rowId}`);
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            if (!row.photos) row.photos = [];
+            
+            row.photos.forEach((photoBase64, idx) => {
+                const item = document.createElement('div');
+                item.className = 'photo-item';
+                item.innerHTML = `
+                    <img src="${photoBase64}" alt="Photo ${idx + 1}" onclick="viewLargeImage('${photoBase64}')">
+                    <button class="photo-item-delete" onclick="deletePhotoItem(event, ${rowId}, ${idx})" title="ลบรูปภาพ">
+                        <i data-lucide="x" style="width:12px; height:12px;"></i>
+                    </button>
+                `;
+                grid.appendChild(item);
+            });
+            
+            // Add the "+" box
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-photo-btn';
+            addBtn.onclick = (e) => {
+                e.stopPropagation();
+                openCameraModal(rowId);
+            };
+            addBtn.innerHTML = `
+                <i data-lucide="plus" style="width:18px; height:18px;"></i>
+                <span style="font-size:10px;">เพิ่มรูป</span>
+            `;
+            grid.appendChild(addBtn);
+            
+            lucide.createIcons();
+        }
+
+        function deletePhotoItem(event, rowId, index) {
+            if (event) event.stopPropagation();
+            
+            if (confirm('คุณต้องการลบรูปภาพนี้ใช่หรือไม่?')) {
+                const row = rows.find(r => r.id === rowId);
+                if (row) {
+                    row.photos.splice(index, 1);
+                    renderPhotosGrid(rowId);
+                    saveToLocalStorage();
+                    updateStats();
+                    updatePreviewTable();
+                    showToast('ลบรูปภาพแล้ว', 'นำรูปถ่ายออกจากรายการเรียบร้อย', 'warning');
+                }
+            }
+        }
+
+        function viewLargeImage(photoBase64) {
+            const win = window.open();
+            win.document.write(`<img src="${photoBase64}" style="max-width:100%; height:auto; display:block; margin:20px auto; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">`);
+        }
+
+        // Stats & Preview Updates
+        function updateStats() {
+            const total = rows.length;
+            const voices = rows.filter(r => r.voiceNote.trim().length > 0).length;
+            const photos = rows.filter(r => r.photos && r.photos.length > 0).length;
+            
+            statTotal.innerText = total;
+            statVoice.innerText = `${voices}/${total}`;
+            statPhoto.innerText = `${photos}/${total}`;
+        }
+
+        function updatePreviewTable() {
+            previewTableBody.innerHTML = '';
+            previewCount.innerText = `${rows.length} แถว`;
+            
+            rows.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                
+                let imgHtml = '<span style="color:var(--text-muted); font-size:11px;">ไม่มีรูป</span>';
+                if (row.photos && row.photos.length > 0) {
+                    imgHtml = `<div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">`;
+                    row.photos.forEach(photo => {
+                        imgHtml += `<img src="${photo}" class="tbl-thumb" alt="Thumbnail" style="width:40px; height:30px; object-fit:cover; margin:2px;">`;
+                    });
+                    imgHtml += `</div>`;
+                }
+                
+                tr.innerHTML = `
+                    <td style="font-family:var(--font-outfit); font-weight:600;">${idx + 1}</td>
+                    <td style="color:var(--text-primary); font-weight:500;">${row.line || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td style="color:var(--text-primary); font-weight:500;">${row.model || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td style="color:var(--text-primary); font-weight:500;">${row.st || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td style="color:var(--text-primary); font-weight:500;">${row.issue || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td>${row.voiceNote || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td style="color:var(--text-primary); font-weight:500;">${row.pic || '<em style="color:var(--text-muted);">-</em>'}</td>
+                    <td style="text-align:center;">${imgHtml}</td>
+                    <td style="font-size:11px; color:var(--text-muted);">${row.dateAdded}</td>
+                `;
+                previewTableBody.appendChild(tr);
+            });
+        }
+
+        // LocalStorage Helpers
+        function saveToLocalStorage() {
+            localStorage.setItem('vibe_excel_collector_data', JSON.stringify(rows));
+        }
+
+        function loadSavedData() {
+            const dataStr = localStorage.getItem('vibe_excel_collector_data');
+            if (dataStr) {
+                try {
+                    const parsed = JSON.parse(dataStr);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        parsed.forEach(savedRow => {
+                            addRow(savedRow);
+                        });
+                        showToast('กู้คืนข้อมูลสำเร็จ', `โหลดข้อมูลรายงานเดิมจำนวน ${parsed.length} รายการ`, 'success');
+                    }
+                } catch (e) {
+                    console.error("Error loading saved data: ", e);
+                }
+            }
+        }
+
+        // EXCEL EXPORT USING EXCELJS
+        async function exportToExcel() {
+            if (rows.length === 0) {
+                showToast('ไม่มีข้อมูล', 'กรุณาเพิ่มรายการและเก็บข้อมูลอย่างน้อย 1 รายการเพื่อส่งออก', 'warning');
+                return;
+            }
+
+            showToast('กำลังเตรียมข้อมูล...', 'โปรดรอสักครู่ ระบบกำลังสร้างไฟล์ Excel...', 'warning');
+
+            try {
+                // 1. Create a new workbook and worksheet
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('รายงานบันทึกข้อมูล');
+
+                // 2. Set Row Heights & Column Widths
+                worksheet.properties.defaultRowHeight = 24;
+                
+                // Determine maximum photos in any row to dynamically add columns (min 2 columns for Picture 1 & 2)
+                const maxPhotos = Math.max(...rows.map(r => r.photos ? r.photos.length : 0), 2);
+                
+                // Define Columns dynamically
+                const columns = [
+                    { header: 'No.', key: 'id', width: 10 },
+                    { header: 'LINE', key: 'line', width: 18 },
+                    { header: 'Model', key: 'model', width: 18 },
+                    { header: 'ST.', key: 'st', width: 15 },
+                    { header: 'Issue', key: 'issue', width: 35 },
+                    { header: 'Action to do', key: 'action', width: 45 },
+                    { header: 'ผู้รับผิดชอบ', key: 'pic', width: 25 }
+                ];
+                
+                for (let p = 0; p < maxPhotos; p++) {
+                    columns.push({ header: `Picture ${p + 1}`, key: `photo_${p}`, width: 28 });
+                }
+                
+                columns.push({ header: 'Date', key: 'date', width: 22 });
+                worksheet.columns = columns;
+
+                // 3. Style the Header Row (Row 1)
+                const headerRow = worksheet.getRow(1);
+                headerRow.height = 36;
+                headerRow.eachCell((cell) => {
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FF107C41' } // Official Excel Green
+                    };
+                    cell.font = {
+                        name: 'Segoe UI',
+                        size: 11,
+                        bold: true,
+                        color: { argb: 'FFFFFFFF' }
+                    };
+                    cell.alignment = {
+                        vertical: 'middle',
+                        horizontal: 'center',
+                        wrapText: true
+                    };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FF0D5C30' } },
+                        left: { style: 'thin', color: { argb: 'FF0D5C30' } },
+                        bottom: { style: 'medium', color: { argb: 'FF0D5C30' } },
+                        right: { style: 'thin', color: { argb: 'FF0D5C30' } }
+                    };
+                });
+
+                // 4. Fill in Rows and Embed Images
+                for (let i = 0; i < rows.length; i++) {
+                    const rowData = rows[i];
+                    const rowIndex = i + 2; // Rows are 1-based, index 1 is header
+                    
+                    const rowValues = {
+                        id: i + 1,
+                        line: rowData.line || '-',
+                        model: rowData.model || '-',
+                        st: rowData.st || '-',
+                        issue: rowData.issue || '-',
+                        action: rowData.voiceNote || '-',
+                        pic: rowData.pic || '-',
+                        date: rowData.dateAdded
+                    };
+                    
+                    // Initialize photo columns placeholder values
+                    for (let p = 0; p < maxPhotos; p++) {
+                        rowValues[`photo_${p}`] = '';
+                    }
+                    
+                    worksheet.addRow(rowValues);
+                    const excelRow = worksheet.getRow(rowIndex);
+                    
+                    // If row has photos, make row much taller to display them nicely
+                    if (rowData.photos && rowData.photos.length > 0) {
+                        excelRow.height = 100; // ~133 pixels
+                    } else {
+                        excelRow.height = 28;  // Normal text row
+                    }
+
+                    // Format Row Cells
+                    excelRow.eachCell((cell, colNum) => {
+                        cell.font = {
+                            name: 'Segoe UI',
+                            size: 10,
+                            color: { argb: 'FF333333' }
+                        };
+                        
+                        // Center align ID, PIC, photos, and Date columns
+                        // Photos start at colNum = 8 up to 8 + maxPhotos - 1
+                        const isPhotoCol = (colNum >= 8 && colNum < 8 + maxPhotos);
+                        const isCenterCol = (colNum === 1 || colNum === 7 || colNum === (7 + maxPhotos + 1) || isPhotoCol);
+                        
+                        cell.alignment = {
+                            vertical: 'middle',
+                            horizontal: isCenterCol ? 'center' : 'left',
+                            wrapText: true
+                        };
+                        cell.border = {
+                            top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            left: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            right: { style: 'thin', color: { argb: 'FFE0E0E0' } }
+                        };
+                    });
+
+                    // Embed Photos if present
+                    if (rowData.photos && rowData.photos.length > 0) {
+                        for (let j = 0; j < rowData.photos.length; j++) {
+                            const photoData = rowData.photos[j];
+                            try {
+                                const base64Parts = photoData.split(',');
+                                const base64Content = base64Parts[1];
+                                const mimeType = base64Parts[0].match(/:(.*?);/)[1];
+                                const extension = mimeType === 'image/png' ? 'png' : 'jpeg';
+
+                                const imageId = workbook.addImage({
+                                    base64: base64Content,
+                                    extension: extension,
+                                });
+
+                                // Place image in consecutive columns: index 7 + j (Column H, I, J...)
+                                const colIndex = 7 + j;
+                                worksheet.addImage(imageId, {
+                                    tl: { col: colIndex, row: rowIndex - 1 },
+                                    br: { col: colIndex + 1, row: rowIndex },
+                                    editAs: 'oneCell'
+                                });
+                            } catch (imgErr) {
+                                console.error(`Failed to embed image ${j} at row ${rowIndex}:`, imgErr);
+                            }
+                        }
+                    } else {
+                        // Set text 'ไม่มีรูปภาพ' in the first photo cell (Column H, index 8)
+                        worksheet.getCell(rowIndex, 8).value = 'ไม่มีรูปภาพ';
+                    }
+                }
+
+                // 5. Generate and Download
+                const buffer = await workbook.xlsx.writeBuffer();
+                
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hour = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                const filename = `VibeExcel_Report_${year}${month}${day}_${hour}${min}.xlsx`;
+
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                
+                if (currentDownloadUrl) {
+                    URL.revokeObjectURL(currentDownloadUrl);
+                }
+                currentDownloadUrl = URL.createObjectURL(blob);
+                
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.href = currentDownloadUrl;
+                downloadLink.download = filename;
+                
+                openDownloadModal();
+                showToast('สร้างไฟล์สำเร็จ!', 'โปรดกดปุ่มดาวน์โหลดบนหน้าต่างที่ปรากฏ', 'success');
+            } catch (err) {
+                console.error("Excel Export Error: ", err);
+                showToast('ส่งออกล้มเหลว', 'เกิดข้อผิดพลาดขณะสร้างไฟล์ Excel: ' + err.message, 'danger');
+            }
+        }
+    </script>
+    
+    <!-- Bottom Action Bar -->
+    <div class="bottom-bar">
+        <button class="btn btn-primary" onclick="addRow()">
+            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+            เพิ่มแถวใหม่
+        </button>
+        <button class="btn btn-success" onclick="exportToExcel()">
+            <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+            ส่งออก Excel
+        </button>
+    </div>
+</body>
+</html>

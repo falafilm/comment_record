@@ -2636,7 +2636,23 @@
                 const day = String(now.getDate()).padStart(2, '0');
                 const hour = String(now.getHours()).padStart(2, '0');
                 const min = String(now.getMinutes()).padStart(2, '0');
-                const filename = `VibeExcel_Report_${year}${month}${day}_${hour}${min}.xlsx`;
+                
+                const nameInput = document.getElementById('project-name-input');
+                let projectName = nameInput ? nameInput.value.trim() : '';
+                if (!projectName || projectName === 'รายงานใหม่') {
+                    projectName = 'VibeExcel_Report';
+                }
+                
+                const defaultFilename = `${projectName}_${year}${month}${day}_${hour}${min}`;
+                let userFilename = prompt("ตั้งชื่อไฟล์ Excel (ไม่ต้องใส่ .xlsx):", defaultFilename);
+                
+                if (userFilename === null) {
+                    showToast('ยกเลิก', 'ยกเลิกการส่งออกไฟล์แล้ว', 'warning');
+                    return;
+                }
+                
+                const finalName = userFilename.trim() || defaultFilename;
+                const filename = `${finalName}.xlsx`;
 
                 const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 

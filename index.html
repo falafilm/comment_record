@@ -2384,27 +2384,42 @@
                 }
 
                 const newRows = [];
-                const images = worksheet.getImages();
+                let images = [];
+                try {
+                    if (typeof worksheet.getImages === 'function') {
+                        images = worksheet.getImages();
+                    }
+                } catch (e) {
+                    console.warn("Could not get images from worksheet", e);
+                }
+
+                let dateCol = 8;
+                const headerRow = worksheet.getRow(1);
+                if (headerRow) {
+                    headerRow.eachCell((cell, colNumber) => {
+                        if (cell.text === 'Date' || cell.value === 'Date') dateCol = colNumber;
+                    });
+                }
 
                 worksheet.eachRow(function(row, rowNumber) {
                     if (rowNumber === 1) return; // Skip header
 
-                    let dateCol = 8;
-                    worksheet.getRow(1).eachCell((cell, colNumber) => {
-                        if (cell.value === 'Date') dateCol = colNumber;
-                    });
-
-                    const parseCell = (val) => val === '-' ? '' : (val || '');
+                    const getVal = (col) => {
+                        const cell = row.getCell(col);
+                        if (!cell) return '';
+                        let text = cell.text || (cell.value ? cell.value.toString() : '');
+                        return text === '-' ? '' : text.trim();
+                    };
 
                     const rowData = {
                         id: Date.now() + rowNumber,
-                        line: parseCell(row.getCell(2).value?.toString()),
-                        model: parseCell(row.getCell(3).value?.toString()),
-                        st: parseCell(row.getCell(4).value?.toString()),
-                        issue: parseCell(row.getCell(5).value?.toString()),
-                        voiceNote: parseCell(row.getCell(6).value?.toString()),
-                        pic: parseCell(row.getCell(7).value?.toString()),
-                        dateAdded: row.getCell(dateCol).value?.toString() || new Date().toLocaleString('th-TH'),
+                        line: getVal(2),
+                        model: getVal(3),
+                        st: getVal(4),
+                        issue: getVal(5),
+                        voiceNote: getVal(6),
+                        pic: getVal(7),
+                        dateAdded: getVal(dateCol) || new Date().toLocaleString('th-TH'),
                         photos: []
                     };
                     
@@ -2413,25 +2428,35 @@
 
                 if (images && images.length > 0) {
                     images.forEach(image => {
-                        const imgRow = Math.floor(image.range.tl.nativeRow || image.range.tl.row);
+                        if (!image.range || !image.range.tl) return;
+                        const imgRow = Math.floor(image.range.tl.nativeRow !== undefined ? image.range.tl.nativeRow : image.range.tl.row);
                         const dataRowIndex = imgRow - 1;
                         
                         if (dataRowIndex >= 0 && dataRowIndex < newRows.length) {
-                            const imgData = workbook.getImage(image.imageId);
-                            if (imgData) {
-                                let ext = imgData.extension || 'jpeg';
-                                if(ext === 'png') ext = 'png';
-                                else ext = 'jpeg';
-                                const base64 = `data:image/${ext};base64,${imgData.buffer.toString('base64')}`;
-                                newRows[dataRowIndex].photos.push(base64);
+                            try {
+                                const imgData = workbook.getImage(image.imageId);
+                                if (imgData && imgData.buffer) {
+                                    let ext = imgData.extension || 'jpeg';
+                                    if(ext === 'png') ext = 'png';
+                                    else ext = 'jpeg';
+                                    const base64 = `data:image/${ext};base64,${imgData.buffer.toString('base64')}`;
+                                    newRows[dataRowIndex].photos.push(base64);
+                                }
+                            } catch (imgErr) {
+                                console.warn("Failed to process image", imgErr);
                             }
                         }
                     });
                 }
 
                 rows = newRows;
-                saveToLocalStorage();
-                renderRows();
+                if (typeof saveToLocalStorage === 'function') {
+                    saveToLocalStorage();
+                }
+                
+                if (typeof renderRows === 'function') {
+                    renderRows();
+                }
                 
                 const nameInput = document.getElementById('project-name-input');
                 if (nameInput) {
@@ -2439,10 +2464,11 @@
                 }
                 
                 showToast('นำเข้าสำเร็จ', 'นำเข้าข้อมูลจาก Excel เรียบร้อยแล้ว', 'success');
-                event.target.value = '';
             } catch (err) {
                 console.error("Excel Import Error: ", err);
-                showToast('นำเข้าล้มเหลว', 'ตรวจสอบไฟล์ Excel ของท่าน: ' + err.message, 'danger');
+                showToast('นำเข้าล้มเหลว', 'โปรดตรวจสอบไฟล์ Excel ของท่าน: ' + err.message, 'danger');
+            } finally {
+                event.target.value = ''; // Reset input to allow re-upload
             }
         }
 

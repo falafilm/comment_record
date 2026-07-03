@@ -1162,10 +1162,7 @@
                         <input type="text" id="project-name-input" class="form-input" style="height: 40px; font-size: 14px; padding-left: 36px; border-radius: var(--radius-md);" placeholder="ชื่อโปรเจกต์ / รายงาน" value="รายงานใหม่">
                         <i data-lucide="file-text" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--text-muted);"></i>
                     </div>
-                    <button class="btn btn-primary" onclick="saveActiveProject()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 6px;">
-                        <i data-lucide="save" style="width:16px; height:16px;"></i>
-                        บันทึกงาน
-                    </button>
+
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
@@ -2368,6 +2365,87 @@
             }
         }
 
+        // EXCEL IMPORT USING EXCELJS
+        async function importExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                showToast('กำลังนำเข้าข้อมูล...', 'โปรดรอสักครู่...', 'warning');
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(arrayBuffer);
+                
+                const worksheet = workbook.getWorksheet(1);
+                if (!worksheet) {
+                    showToast('เกิดข้อผิดพลาด', 'ไม่พบแผ่นงานในไฟล์ Excel', 'danger');
+                    return;
+                }
+
+                const newRows = [];
+                const images = worksheet.getImages();
+
+                worksheet.eachRow(function(row, rowNumber) {
+                    if (rowNumber === 1) return; // Skip header
+
+                    let dateCol = 8;
+                    worksheet.getRow(1).eachCell((cell, colNumber) => {
+                        if (cell.value === 'Date') dateCol = colNumber;
+                    });
+
+                    const parseCell = (val) => val === '-' ? '' : (val || '');
+
+                    const rowData = {
+                        id: Date.now() + rowNumber,
+                        line: parseCell(row.getCell(2).value?.toString()),
+                        model: parseCell(row.getCell(3).value?.toString()),
+                        st: parseCell(row.getCell(4).value?.toString()),
+                        issue: parseCell(row.getCell(5).value?.toString()),
+                        voiceNote: parseCell(row.getCell(6).value?.toString()),
+                        pic: parseCell(row.getCell(7).value?.toString()),
+                        dateAdded: row.getCell(dateCol).value?.toString() || new Date().toLocaleString('th-TH'),
+                        photos: []
+                    };
+                    
+                    newRows.push(rowData);
+                });
+
+                if (images && images.length > 0) {
+                    images.forEach(image => {
+                        const imgRow = Math.floor(image.range.tl.nativeRow || image.range.tl.row);
+                        const dataRowIndex = imgRow - 1;
+                        
+                        if (dataRowIndex >= 0 && dataRowIndex < newRows.length) {
+                            const imgData = workbook.getImage(image.imageId);
+                            if (imgData) {
+                                let ext = imgData.extension || 'jpeg';
+                                if(ext === 'png') ext = 'png';
+                                else ext = 'jpeg';
+                                const base64 = `data:image/${ext};base64,${imgData.buffer.toString('base64')}`;
+                                newRows[dataRowIndex].photos.push(base64);
+                            }
+                        }
+                    });
+                }
+
+                rows = newRows;
+                saveToLocalStorage();
+                renderRows();
+                
+                const nameInput = document.getElementById('project-name-input');
+                if (nameInput) {
+                    nameInput.value = file.name.replace(/\.[^/.]+$/, "");
+                }
+                
+                showToast('นำเข้าสำเร็จ', 'นำเข้าข้อมูลจาก Excel เรียบร้อยแล้ว', 'success');
+                event.target.value = '';
+            } catch (err) {
+                console.error("Excel Import Error: ", err);
+                showToast('นำเข้าล้มเหลว', 'ตรวจสอบไฟล์ Excel ของท่าน: ' + err.message, 'danger');
+            }
+        }
+
         // EXCEL EXPORT USING EXCELJS
         async function exportToExcel() {
             if (rows.length === 0) {
@@ -2556,6 +2634,15 @@
     
     <!-- Bottom Action Bar -->
     <div class="bottom-bar">
+        <input type="file" id="import-excel-file" accept=".xlsx" style="display: none;" onchange="importExcel(event)">
+        <button class="btn btn-primary" onclick="document.getElementById('import-excel-file').click()" style="background-color: #6c757d; border-color: #6c757d;">
+            <i data-lucide="upload" style="width: 18px; height: 18px;"></i>
+            นำเข้า Excel
+        </button>
+        <button class="btn btn-primary" onclick="saveActiveProject()" style="background-color: #0d6efd;">
+            <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+            บันทึกงาน
+        </button>
         <button class="btn btn-primary" onclick="addRow()">
             <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
             เพิ่มแถวใหม่

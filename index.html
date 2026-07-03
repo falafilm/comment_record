@@ -1162,7 +1162,12 @@
                         <input type="text" id="project-name-input" class="form-input" style="height: 40px; font-size: 14px; padding-left: 36px; border-radius: var(--radius-md);" placeholder="ชื่อโปรเจกต์ / รายงาน" value="รายงานใหม่">
                         <i data-lucide="file-text" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--text-muted);"></i>
                     </div>
-
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <i data-lucide="history" style="width:16px; height:16px; color: var(--primary);"></i>
+                        ประวัติงาน
+                    </button>
                 </div>
             </div>
         </div>
@@ -1185,10 +1190,6 @@
 
         <!-- Actions before Table Section -->
         <div style="display: flex; gap: 8px; justify-content: flex-end; padding: 0 20px 20px 20px; max-width: 1200px; margin: 0 auto;">
-            <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                <i data-lucide="history" style="width:16px; height:16px; color: var(--primary);"></i>
-                ประวัติงาน
-            </button>
             <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none; height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
                 ล้างข้อมูล

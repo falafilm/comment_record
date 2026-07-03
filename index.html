@@ -1164,16 +1164,6 @@
                     </div>
 
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <i data-lucide="history" style="width:16px; height:16px; color: var(--primary);"></i>
-                        ประวัติงาน
-                    </button>
-                    <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none; height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 6px;">
-                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                        ล้างข้อมูล
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -2675,23 +2665,32 @@
     </script>
     
     <!-- Bottom Action Bar -->
-    <div class="bottom-bar">
+    <div class="bottom-bar" style="flex-wrap: wrap; padding: 10px; gap: 10px;">
         <input type="file" id="import-excel-file" accept=".xlsx" style="display: none;" onchange="importExcel(event)">
+        
+        <button class="btn" onclick="openHistoryModal()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary);">
+            <i data-lucide="history" style="width: 18px; height: 18px; color: var(--primary);"></i>
+            ประวัติ
+        </button>
         <button class="btn btn-primary" onclick="document.getElementById('import-excel-file').click()" style="background-color: #6c757d; border-color: #6c757d;">
             <i data-lucide="upload" style="width: 18px; height: 18px;"></i>
-            นำเข้า Excel
+            นำเข้า
         </button>
         <button class="btn btn-primary" onclick="saveActiveProject()" style="background-color: #0d6efd;">
             <i data-lucide="save" style="width: 18px; height: 18px;"></i>
-            บันทึกงาน
+            บันทึก
         </button>
         <button class="btn btn-primary" onclick="addRow()">
             <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
-            เพิ่มแถวใหม่
+            เพิ่มแถว
         </button>
         <button class="btn btn-success" onclick="exportToExcel()">
             <i data-lucide="download" style="width: 18px; height: 18px;"></i>
-            ส่งออก Excel
+            ส่งออก
+        </button>
+        <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none;">
+            <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+            ล้างข้อมูล
         </button>
     </div>
 </body>

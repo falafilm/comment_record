@@ -1154,10 +1154,30 @@
                 <h3 style="font-family: var(--font-outfit); font-weight: 600;">รายการเก็บข้อมูล</h3>
                 <p style="color: var(--text-secondary); font-size: 13px;">กรอกข้อมูล พูด หรือถ่ายรูป เพื่อนำข้อมูลใส่ในแต่ละคอลัมน์ของ Excel</p>
             </div>
-            <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none;">
-                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                ล้างข้อมูลทั้งหมด
-            </button>
+            
+            <!-- Project management controls -->
+            <div class="project-controls" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; width: 100%; margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <div style="display: flex; gap: 8px; flex: 1; min-width: 250px;">
+                    <div style="position: relative; flex: 1;">
+                        <input type="text" id="project-name-input" class="form-input" style="height: 40px; font-size: 14px; padding-left: 36px; border-radius: var(--radius-md);" placeholder="ชื่อโปรเจกต์ / รายงาน" value="รายงานใหม่">
+                        <i data-lucide="file-text" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--text-muted);"></i>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveActiveProject()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="save" style="width:16px; height:16px;"></i>
+                        บันทึกงาน
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <i data-lucide="history" style="width:16px; height:16px; color: var(--primary);"></i>
+                        ประวัติงาน
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllRows()" id="clear-all-btn" style="display: none; height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        ล้างข้อมูล
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Dynamic Rows List -->
@@ -1258,6 +1278,29 @@
         </div>
     </div>
 
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; width:100%;">
+                <h3 style="font-family: var(--font-outfit); font-size: 18px; font-weight: 700; color: var(--text-primary);">
+                    <i data-lucide="history" style="display:inline-block; vertical-align:middle; margin-right:8px; color:var(--primary);"></i> 
+                    ประวัติงาน / รายงานที่บันทึก
+                </h3>
+                <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            
+            <div id="history-list" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin: 10px 0;">
+                <!-- Filled dynamically with saved projects -->
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn" onclick="closeHistoryModal()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); height: 40px; font-size: 14px; cursor: pointer; padding: 0 16px; border-radius: var(--radius-md);">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
     <datalist id="existing-lines"></datalist>
@@ -1299,11 +1342,14 @@
         const statVoice = document.getElementById('stat-voice');
         const statPhoto = document.getElementById('stat-photo');
 
+        let activeProjectId = null;
+
         // Initialize Lucide Icons
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             initSpeechRecognition();
             loadSavedData();
+            loadActiveProjectFromStorage();
             updateDatalists();
         });
 
@@ -1756,10 +1802,14 @@
         }
 
         function clearAllRows() {
-            if (confirm('คุณต้องการลบข้อมูลทั้งหมดจริงหรือไม่?')) {
+            if (confirm('คุณต้องการล้างข้อมูลแถวบนหน้าจอทั้งหมดจริงหรือไม่? (ไฟล์ในประวัติจะไม่ถูกลบ)')) {
                 // Clear state
                 rows = [];
+                activeProjectId = null;
+                document.getElementById('project-name-input').value = 'รายงานใหม่';
                 saveToLocalStorage();
+                localStorage.removeItem('vibe_excel_active_project_id');
+                localStorage.removeItem('vibe_excel_active_project_name');
                 
                 // Remove all card elements except the empty state
                 const cards = document.querySelectorAll('.row-card');
@@ -1772,7 +1822,183 @@
                 updateStats();
                 updatePreviewTable();
                 updateDatalists();
-                showToast('ล้างข้อมูลทั้งหมดแล้ว', 'สร้างแถวใหม่เพื่อเริ่มต้นบันทึกข้อมูลอีกครั้ง', 'danger');
+                showToast('ล้างข้อมูลหน้าจอแล้ว', 'เริ่มบันทึกรายงานใหม่ได้เลยครับ', 'danger');
+            }
+        }
+
+        // Project / File History Management
+        function getProjectsHistory() {
+            const data = localStorage.getItem('vibe_excel_projects_history');
+            if (!data) return [];
+            try {
+                return JSON.parse(data);
+            } catch (e) {
+                console.error(e);
+                return [];
+            }
+        }
+
+        function saveActiveProject() {
+            const nameInput = document.getElementById('project-name-input');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast('กรุณากรอกชื่อโปรเจกต์', 'ตั้งชื่อสำหรับรายงานนี้ก่อนกดยืนยันบันทึก', 'danger');
+                return;
+            }
+
+            const history = getProjectsHistory();
+            const now = new Date().toLocaleString('th-TH');
+            
+            if (!activeProjectId) {
+                // Check if name already exists in history to prevent duplicate creation
+                const exists = history.find(p => p.name.toLowerCase() === name.toLowerCase());
+                if (exists && !confirm(`พบรายงานชื่อ "${name}" อยู่ในประวัติแล้ว คุณต้องการเขียนทับหรือไม่?`)) {
+                    return;
+                }
+                activeProjectId = exists ? exists.id : Date.now();
+            }
+
+            const projectIndex = history.findIndex(p => p.id === activeProjectId);
+            const projectData = {
+                id: activeProjectId,
+                name: name,
+                rows: JSON.parse(JSON.stringify(rows)),
+                lastUpdated: now
+            };
+
+            if (projectIndex > -1) {
+                history[projectIndex] = projectData;
+            } else {
+                history.push(projectData);
+            }
+
+            localStorage.setItem('vibe_excel_projects_history', JSON.stringify(history));
+            localStorage.setItem('vibe_excel_active_project_id', activeProjectId);
+            localStorage.setItem('vibe_excel_active_project_name', name);
+
+            showToast('บันทึกสำเร็จ!', `บันทึกรายงาน "${name}" แล้ว`, 'success');
+        }
+
+        function openHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            modal.classList.add('open');
+            renderHistoryList();
+        }
+
+        function closeHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            modal.classList.remove('open');
+        }
+
+        function renderHistoryList() {
+            const historyList = document.getElementById('history-list');
+            if (!historyList) return;
+            historyList.innerHTML = '';
+            
+            const history = getProjectsHistory();
+            if (history.length === 0) {
+                historyList.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <i data-lucide="info" style="width: 28px; height: 28px; color: var(--text-muted);"></i>
+                        <span>ยังไม่มีประวัติโปรเจกต์ที่บันทึกไว้</span>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            history.sort((a, b) => b.id - a.id);
+
+            history.forEach(proj => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.padding = '12px 14px';
+                item.style.background = 'rgba(255, 255, 255, 0.02)';
+                item.style.border = '1px solid var(--border-color)';
+                item.style.borderRadius = 'var(--radius-md)';
+                item.style.gap = '12px';
+
+                item.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; text-align: left;">
+                        <span style="font-weight: 600; color: var(--text-primary); font-size: 14px;">${proj.name}</span>
+                        <span style="font-size: 11px; color: var(--text-muted);">
+                            อัปเดต: ${proj.lastUpdated} | มี ${proj.rows.length} รายการ
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" onclick="loadProject(${proj.id})" style="height: 32px; font-size: 12px; padding: 0 12px; background: var(--success); color: white; cursor: pointer; border-radius: var(--radius-sm); border: none;">
+                            โหลด
+                        </button>
+                        <button class="btn" onclick="deleteProject(${proj.id})" style="height: 32px; font-size: 12px; padding: 0 12px; background: rgba(244, 63, 94, 0.1); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.2); cursor: pointer; border-radius: var(--radius-sm);">
+                            ลบ
+                        </button>
+                    </div>
+                `;
+                historyList.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function loadProject(id) {
+            const history = getProjectsHistory();
+            const proj = history.find(p => p.id === id);
+            if (!proj) return;
+
+            if (confirm(`คุณต้องการโหลดโปรเจกต์ "${proj.name}" หรือไม่?\n(คำเตือน: ข้อมูลบนหน้าจอปัจจุบันจะถูกแทนที่ด้วยข้อมูลของไฟล์นี้)`)) {
+                const cards = document.querySelectorAll('.row-card');
+                cards.forEach(card => card.remove());
+
+                rows = [];
+                activeProjectId = proj.id;
+                document.getElementById('project-name-input').value = proj.name;
+                
+                localStorage.setItem('vibe_excel_active_project_id', activeProjectId);
+                localStorage.setItem('vibe_excel_active_project_name', proj.name);
+
+                proj.rows.forEach(savedRow => {
+                    addRow(savedRow);
+                });
+
+                saveToLocalStorage();
+                updateStats();
+                updatePreviewTable();
+                updateDatalists();
+                
+                closeHistoryModal();
+                showToast('โหลดงานสำเร็จ', `เปิดรายงาน "${proj.name}" แล้ว`, 'success');
+            }
+        }
+
+        function deleteProject(id) {
+            const history = getProjectsHistory();
+            const proj = history.find(p => p.id === id);
+            if (!proj) return;
+
+            if (confirm(`คุณต้องการลบโปรเจกต์ "${proj.name}" ออกจากประวัติการบันทึกจริงหรือไม่?\n(คำเตือน: ลบแล้วไม่สามารถย้อนคืนได้)`)) {
+                const updated = history.filter(p => p.id !== id);
+                localStorage.setItem('vibe_excel_projects_history', JSON.stringify(updated));
+                
+                if (activeProjectId === id) {
+                    activeProjectId = null;
+                    document.getElementById('project-name-input').value = 'รายงานใหม่';
+                    localStorage.removeItem('vibe_excel_active_project_id');
+                    localStorage.removeItem('vibe_excel_active_project_name');
+                }
+
+                renderHistoryList();
+                showToast('ลบสำเร็จ', `ลบประวัติงาน "${proj.name}" แล้ว`, 'warning');
+            }
+        }
+
+        function loadActiveProjectFromStorage() {
+            const savedId = localStorage.getItem('vibe_excel_active_project_id');
+            const savedName = localStorage.getItem('vibe_excel_active_project_name');
+            if (savedId) {
+                activeProjectId = parseInt(savedId, 10);
+                const nameInput = document.getElementById('project-name-input');
+                if (nameInput) nameInput.value = savedName || 'รายงานใหม่';
             }
         }
 

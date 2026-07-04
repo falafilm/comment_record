@@ -1856,7 +1856,7 @@
 
         function saveActiveProject() {
             const nameInput = document.getElementById('project-name-input');
-            const name = nameInput.value.trim();
+            let name = nameInput.value.trim();
             if (!name) {
                 showToast('กรุณากรอกชื่อโปรเจกต์', 'ตั้งชื่อสำหรับรายงานนี้ก่อนกดยืนยันบันทึก', 'danger');
                 return;
@@ -1865,16 +1865,9 @@
             const history = getProjectsHistory();
             const now = new Date().toLocaleString('th-TH');
             
-            if (!activeProjectId) {
-                // Check if name already exists in history to prevent duplicate creation
-                const exists = history.find(p => p.name.toLowerCase() === name.toLowerCase());
-                if (exists && !confirm(`พบรายงานชื่อ "${name}" อยู่ในประวัติแล้ว คุณต้องการเขียนทับหรือไม่?`)) {
-                    return;
-                }
-                activeProjectId = exists ? exists.id : Date.now();
-            }
+            // Generate a new ID every time to create a "stack" of saves
+            activeProjectId = Date.now();
 
-            const projectIndex = history.findIndex(p => p.id === activeProjectId);
             const projectData = {
                 id: activeProjectId,
                 name: name,
@@ -1882,11 +1875,7 @@
                 lastUpdated: now
             };
 
-            if (projectIndex > -1) {
-                history[projectIndex] = projectData;
-            } else {
-                history.push(projectData);
-            }
+            history.push(projectData);
 
             localStorage.setItem('vibe_excel_projects_history', JSON.stringify(history));
             localStorage.setItem('vibe_excel_active_project_id', activeProjectId);

@@ -1856,11 +1856,17 @@
 
         function saveActiveProject() {
             const nameInput = document.getElementById('project-name-input');
-            let name = nameInput.value.trim();
-            if (!name) {
-                showToast('กรุณากรอกชื่อโปรเจกต์', 'ตั้งชื่อสำหรับรายงานนี้ก่อนกดยืนยันบันทึก', 'danger');
-                return;
+            let currentName = nameInput.value.trim();
+            if (!currentName) currentName = 'รายงานใหม่';
+            
+            let userProvidedName = prompt("ตั้งชื่อการบันทึกงานครั้งนี้:", currentName);
+            if (userProvidedName === null) {
+                return; // Cancelled
             }
+            
+            let name = userProvidedName.trim();
+            if (!name) name = 'รายงานใหม่';
+            nameInput.value = name;
 
             const history = getProjectsHistory();
             const now = new Date().toLocaleString('th-TH');

@@ -2468,13 +2468,16 @@
                     });
                 }
 
-                rows = newRows;
+                // Clear UI first
+                const cards = document.querySelectorAll('.row-card');
+                cards.forEach(card => card.remove());
+                
+                // Render new imported rows
+                rows = [];
+                newRows.forEach(r => addRow(r));
+
                 if (typeof saveToLocalStorage === 'function') {
                     saveToLocalStorage();
-                }
-                
-                if (typeof renderRows === 'function') {
-                    renderRows();
                 }
                 
                 const nameInput = document.getElementById('project-name-input');

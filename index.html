@@ -2326,7 +2326,15 @@
             statPhoto.innerText = `${photos}/${total}`;
         }
 
+        let previewTimeout;
         function updatePreviewTable() {
+            clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(() => {
+                _updatePreviewTable();
+            }, 300);
+        }
+
+        function _updatePreviewTable() {
             previewTableBody.innerHTML = '';
             previewCount.innerText = `${rows.length} แถว`;
             
@@ -2358,8 +2366,17 @@
         }
 
         // LocalStorage Helpers
+        let saveTimeout;
         function saveToLocalStorage() {
-            localStorage.setItem('vibe_excel_collector_data', JSON.stringify(rows));
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                try {
+                    localStorage.setItem('vibe_excel_collector_data', JSON.stringify(rows));
+                } catch (e) {
+                    console.error("Failed to save to local storage (data might be too large): ", e);
+                    showToast('บันทึกข้อมูลล้มเหลว', 'ข้อมูลมีขนาดใหญ่เกินไป อาจทำให้บางส่วนไม่ถูกบันทึก', 'danger');
+                }
+            }, 500);
         }
 
         function loadSavedData() {

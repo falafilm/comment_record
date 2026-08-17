@@ -2632,7 +2632,7 @@
                                 worksheet.addImage(imageId, {
                                     tl: { col: colIndex, row: rowIndex - 1 },
                                     br: { col: colIndex + 1, row: rowIndex },
-                                    editAs: 'oneCell'
+                                    editAs: 'twoCell'
                                 });
                             } catch (imgErr) {
                                 console.error(`Failed to embed image ${j} at row ${rowIndex}:`, imgErr);

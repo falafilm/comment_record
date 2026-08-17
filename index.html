@@ -1180,6 +1180,10 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="createNewProject()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <i data-lucide="folder-plus" style="width:16px; height:16px; color: var(--success);"></i>
+                        โปรเจกต์ใหม่
+                    </button>
                     <button class="btn" onclick="openHistoryModal()" style="height: 40px; font-size: 13px; padding: 0 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                         <i data-lucide="history" style="width:16px; height:16px; color: var(--primary);"></i>
                         ประวัติงาน
@@ -1894,6 +1898,35 @@
             const modal = document.getElementById('historyModal');
             modal.classList.add('open');
             renderHistoryList();
+        }
+
+        function createNewProject() {
+            if (rows.length > 0 && !confirm('คุณแน่ใจหรือไม่ว่าต้องการสร้างโปรเจกต์ใหม่? (ข้อมูลบนหน้าจอที่ยังไม่ได้กดบันทึกจะหายไป)')) {
+                return;
+            }
+            // Clear state
+            rows = [];
+            activeProjectId = null;
+            document.getElementById('project-name-input').value = 'รายงานใหม่';
+            
+            // Remove all row cards
+            const cards = document.querySelectorAll('.row-card');
+            cards.forEach(card => card.remove());
+            
+            // Clear specific local storage items
+            localStorage.removeItem('vibe_excel_collector_data');
+            localStorage.removeItem('vibe_excel_active_project_id');
+            localStorage.removeItem('vibe_excel_active_project_name');
+            
+            emptyState.style.display = 'flex';
+            clearAllBtn.style.display = 'none';
+            previewSection.style.display = 'none';
+            
+            updateStats();
+            updatePreviewTable();
+            updateDatalists();
+            
+            showToast('เริ่มงานใหม่', 'ระบบพร้อมสำหรับการสร้างรายงานฉบับใหม่แล้ว', 'success');
         }
 
         function closeHistoryModal() {
